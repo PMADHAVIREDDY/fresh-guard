@@ -1,0 +1,4 @@
+fresh_apple
+fresh_banana
+rotten_apple
+rotten_banana
