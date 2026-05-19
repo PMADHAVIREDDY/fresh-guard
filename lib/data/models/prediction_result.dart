@@ -12,9 +12,12 @@ class PredictionResult {
   });
 
   static String extractFruitName(String label) {
-    final name = label
-        .replaceAll('fresh_', '')
-        .replaceAll('rotten_', '');
+    // Handles: freshapple, rottenapple, freshbanana,
+    //          rottenbanana, freshorange, rottenorange
+    String name = label
+        .replaceAll('fresh', '')
+        .replaceAll('rotten', '')
+        .replaceAll('_', '');
     return name[0].toUpperCase() + name.substring(1);
   }
 }

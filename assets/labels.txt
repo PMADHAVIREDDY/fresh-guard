@@ -1,4 +1,6 @@
-fresh_apple
-fresh_banana
-rotten_apple
-rotten_banana
+freshapples
+freshbanana
+freshoranges
+rottenapples
+rottenbanana
+rottenoranges

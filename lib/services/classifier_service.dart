@@ -11,20 +11,27 @@ class ClassifierService {
   bool _isLoaded = false;
 
   Future<void> load() async {
-    try {
-      _interpreter = await Interpreter.fromAsset('assets/food_model.tflite');
-      final rawLabels = await rootBundle.loadString('assets/labels.txt');
-      _labels = rawLabels
-          .trim()
-          .split('\n')
-          .map((e) => e.trim())
-          .where((e) => e.isNotEmpty)
-          .toList();
-      _isLoaded = true;
-    } catch (e) {
-      throw Exception('Failed to load model: $e');
-    }
+  try {
+    final interpreterOptions = InterpreterOptions()..threads = 2;
+    _interpreter = await Interpreter.fromAsset(
+      'assets/food_model.tflite',
+      options: interpreterOptions,
+    );
+    final rawLabels = await rootBundle.loadString('assets/labels.txt');
+    _labels = rawLabels
+        .trim()
+        .split('\n')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    print('✅ Model loaded! Labels: $_labels');
+    print('✅ Input shape: ${_interpreter.getInputTensor(0).shape}');
+    _isLoaded = true;
+  } catch (e) {
+    print('❌ Load error: $e');
+    throw Exception('Failed to load model: $e');
   }
+}
 
   bool get isLoaded => _isLoaded;
 
@@ -39,9 +46,25 @@ class ClassifierService {
     );
 
     final scores = List<double>.from(output[0]);
+
+    // Print all scores so we can see what model thinks
+    for (int i = 0; i < _labels.length; i++) {
+      print('${_labels[i]}: ${(scores[i] * 100).toStringAsFixed(1)}%');
+    }
+
     final maxScore = scores.reduce((a, b) => a > b ? a : b);
     final maxIndex = scores.indexOf(maxScore);
     final label = _labels[maxIndex];
+
+    // If confidence is too low, pick between rotten options carefully
+    if (maxScore < 0.6) {
+      // Find the second highest score
+      final sortedScores = List<double>.from(scores)..sort((a, b) => b.compareTo(a));
+      final secondScore = sortedScores[1];
+      final secondIndex = scores.indexOf(secondScore);
+
+      print('Low confidence! Top: $label ($maxScore), Second: ${_labels[secondIndex]} ($secondScore)');
+    }
 
     return PredictionResult(
       label: label,
